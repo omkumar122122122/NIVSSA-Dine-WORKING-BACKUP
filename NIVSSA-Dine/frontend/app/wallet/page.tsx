@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { API_BASE_URL } from "@/lib/api";
 
-const API_URL = "http://localhost:5000/api";
+const API_URL = API_BASE_URL;
 
 type Transaction = {
   _id: string;

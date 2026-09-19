@@ -21,7 +21,53 @@ const app = express();
    MIDDLEWARE
 ===================================================== */
 
-app.use(cors());
+const normalizeOrigin = (origin) =>
+  origin.replace(/\/+$/, "").toLowerCase();
+
+const configuredOrigins = [
+  "http://localhost:3000",
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "http://127.0.0.1:3000",
+  "http://127.0.0.1:5173",
+  "https://nivssa-dine-working-backup-1.onrender.com",
+  ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
+  ...(process.env.CORS_ORIGINS
+    ? process.env.CORS_ORIGINS.split(",")
+        .map((origin) => origin.trim())
+        .filter(Boolean)
+    : []),
+].map(normalizeOrigin);
+
+const isOriginAllowed = (origin) => {
+  if (!origin) return true;
+  const norm = normalizeOrigin(origin);
+  if (configuredOrigins.includes(norm)) return true;
+  try {
+    const url = new URL(origin);
+    if (url.hostname === "localhost" || url.hostname === "127.0.0.1") return true;
+    if (url.hostname.endsWith(".vercel.app")) return true;
+  } catch {
+    // Malformed origin URL
+  }
+  return false;
+};
+
+const corsOptions = {
+  origin(origin, callback) {
+    if (isOriginAllowed(origin)) {
+      callback(null, true);
+    } else {
+      console.warn(`[CORS] Blocked origin: ${origin}`);
+      callback(null, false);
+    }
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
 /* =====================================================
@@ -39,7 +85,7 @@ app.use("/api/referral", referralRoutes);
 app.use("/api/coupons", couponRoutes);
 
 /* =====================================================
-   ROOT
+   ROOT & HEALTH CHECK
 ===================================================== */
 
 app.get("/", (req, res) => {
@@ -48,11 +94,19 @@ app.get("/", (req, res) => {
   });
 });
 
+app.get("/health", (req, res) => {
+  res.json({
+    status: "ok",
+    service: "nivssa-dine-backend",
+    timestamp: new Date().toISOString(),
+  });
+});
+
 /* =====================================================
    PORT
 ===================================================== */
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3000;
 
 /* =====================================================
    MONGODB + SERVER START

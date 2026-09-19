@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { API_BASE_URL } from "@/lib/api";
 
-const API_BASE_URL = "http://localhost:5000/api";
 
 declare global {
   interface Window {
