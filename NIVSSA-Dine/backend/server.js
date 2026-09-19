@@ -65,9 +65,9 @@ mongoose
 
     startReservationCron();
 
-    app.listen(PORT, () => {
+    app.listen(PORT, "0.0.0.0", () => {
       console.log(
-        `NIVSSA Dine Backend running on http://localhost:${PORT}`
+        `NIVSSA Dine Backend running on port ${PORT}`
       );
     });
   })
